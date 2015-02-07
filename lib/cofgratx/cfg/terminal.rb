@@ -5,7 +5,7 @@ class Terminal
       raise ArgumentError.new("expected Regular Expression or String; got #{param.class.name}")
     end
     param = param.class == String ?
-              param = Regexp.escape(param) :
+              Regexp.escape(param) :
               param.source
 
     @terminal = Regexp.compile "^(" + param +")"
