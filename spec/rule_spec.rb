@@ -1,12 +1,14 @@
 require 'spec_helper'
 require 'cofgratx/cfg/terminal'
 require 'cofgratx/cfg/repetition'
+require 'cofgratx/cfg/translation_repetition_set_error'
+require 'cofgratx/cfg/translation_repetition_set'
 require 'cofgratx/cfg/rule_error'
 require 'cofgratx/cfg/rule'
 
+
 describe Rule do
   before(:all) do
-  p "other stuff!"
 #    @terminal_bob =     Terminal.new( "bob" )
 #    @terminal_spaces =  Terminal.new( /\s+/ )
 #    @terminal_thing =   Terminal.new( /t.*n/ )
@@ -15,7 +17,6 @@ describe Rule do
 
   context ".set_rule" do
     before(:all) do
-      p "before context .initialize"
       @terminal_a       = Terminal.new("a")
       @terminal_b       = Terminal.new(/b/)
       @repetition_comma = Repetition.new( "," )
@@ -51,31 +52,30 @@ describe Rule do
 
   context ".set_translation" do
     before(:all) do
-      p "before context .initialize"
-      @terminal_a       = Terminal.new("a")
-      @terminal_b       = Terminal.new(/b/)
-      @repetition_comma = Repetition.new( "," )
+      @tx_rep_set = TranslationRepetitionSet.new(1, 2, 4)
     end
 
     before do
       @rule = described_class.new
     end
 
-    it { expect{ @rule.set_rule() }.to_not raise_error }
-    it { expect{ @rule.set_rule(@terminal_a) }.to_not raise_error }
-    it { expect{ @rule.set_rule(@terminal_b) }.to_not raise_error }
-    it { expect{ @rule.set_rule(@terminal_a, @repetition_comma) }.to_not raise_error }
-    it { expect{ @rule.set_rule(@terminal_a, @terminal_b, @terminal_a, @repetition_comma) }.to_not raise_error }
+    it { expect{ @rule.set_translation() }.to_not raise_error }
+    it { expect{ @rule.set_translation(1) }.to_not raise_error }
+    it { expect{ @rule.set_translation(1,2,3) }.to_not raise_error }
+    it { expect{ @rule.set_translation([1,"foo","bar"]) }.to_not raise_error }
+    it { expect{ @rule.set_translation(1, @tx_rep_set) }.to_not raise_error }
 
-    it "raises an exception on bad initial objects" do
-      expect{ @rule.set_rule(12345) }.to raise_error(ArgumentError, "expected Terminal or Repetition; got #{12345.class.name}")
+    context "bad input" do
+      def message_helper obj
+        "expected Fixnum, String or TranslationRepetitionSet; got #{obj.class.name}"
+      end
+
+      it { expect{ @rule.set_translation(1.32) }.to raise_error(ArgumentError, message_helper(1.32)) }
+      it { expect{ @rule.set_translation(1, {1=>2}) }.to raise_error(ArgumentError, message_helper({1=>2})) }
+      it { expect{ @rule.set_translation(/asd/) }.to raise_error(ArgumentError, message_helper(/asd/)) }
     end
-
-    it "the repetition cannot be the first for the rule" do
-      expect{ @rule.set_rule(@repetition_comma) }.to raise_error(RuleError, "cannot have repetition as the first part of the rule")
-    end
-
   end
+
 =begin
   context ".initialize" do
     before(:all) do

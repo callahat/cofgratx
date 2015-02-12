@@ -21,4 +21,15 @@ class Rule
     @rule = good_parts
   end
 
+  def set_translation *translation
+    good_parts = []
+    translation.flatten.each do |part|
+      if ! [Fixnum, String, TranslationRepetitionSet].include? part.class
+        raise ArgumentError.new("expected Fixnum, String or TranslationRepetitionSet; got #{part.class.name}")
+      end
+      good_parts << part
+    end
+    @translation = good_parts
+  end
+
 end
