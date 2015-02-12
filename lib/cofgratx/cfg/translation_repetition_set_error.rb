@@ -1,0 +1,2 @@
+class TranslationRepetitionSetError < Exception
+end
