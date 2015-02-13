@@ -1,9 +1,8 @@
 class Rule
 
   def initialize subrules = [], translations = []
-    @rule = []
-    @translation = []
-
+    @rule = set_rule subrules
+    @translation = set_translation translations
   end
 
   def set_rule *rule
@@ -30,6 +29,21 @@ class Rule
       good_parts << part
     end
     @translation = good_parts
+  end
+
+  def valid_translation?
+    @translation.each do |part|
+      if part.class == TranslationRepetitionSet
+        if @rule.last.class != Repetition
+          return false
+        elsif part.translations.select{|tx| tx.class == Fixnum and tx > @rule.size}.count > 0
+          return false
+        end
+      else
+        return false if part > @rule.size
+      end
+    end
+    true
   end
 
 end

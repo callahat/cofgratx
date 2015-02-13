@@ -76,39 +76,69 @@ describe Rule do
     end
   end
 
-=begin
+
   context ".initialize" do
     before(:all) do
-      p "before context .initialize"
-      @terminal_a       = Terminal.new( "a" )
-      @terminal_b       = Terminal.new( /b+/ )
+      @terminal_a       = Terminal.new("a")
+      @terminal_b       = Terminal.new(/b/)
       @repetition_comma = Repetition.new( "," )
+
+      @tx_rep_set = TranslationRepetitionSet.new(1, 2, 4)
+
+      @rule = [@terminal_a, @terminal_b]
+      @translation = [1, 2, @tx_rep_set]
     end
 
-    it { expect{ described_class.new() }.to_not raise_error }
-    it { expect{ described_class.new(@terminal_a) }.to_not raise_error }
-    it { expect{ described_class.new(@terminal_b) }.to_not raise_error }
-    it { expect{ described_class.new(@terminal_a, @repetition_comma) }.to_not raise_error }
-    it { expect{ described_class.new(@terminal_a, @terminal_b, @terminal_a, @repetition_comma) }.to_not raise_error }
+    it "sets the subrules and translations by calling the appropriate methods" do
+      expect_any_instance_of(described_class).to receive(:set_rule).with(@rule).and_call_original
+      expect_any_instance_of(described_class).to receive(:set_translation).with(@translation).and_call_original
 
-    it "raises an exception on bad initial objects" do
-      expect{ described_class.new(12345) }.to raise_error(ArgumentError, "expected Terminal or Repetition; got #{12345.class.name}")
+      described_class.new(@rule, @translation)
     end
 
-    it "the repetition cannot be the first for the rule" do
-      expect{ described_class.new(@repetition_comma) }.to raise_error(RuleError, "cannot have repetition as the first part of the rule")
+    it "sets the subrules and translations when no translation is given" do
+      expect_any_instance_of(described_class).to receive(:set_rule).with(@rule).and_call_original
+      expect_any_instance_of(described_class).to receive(:set_translation).with([]).and_call_original
+
+      described_class.new(@rule)
     end
 
-    context "nothing can follow the repetition" do
-      it {expect{
-                  described_class.new(@terminal_a, @repetition_comma, @terminal_a)
-                }.to raise_error(RuleError, "nothing can follow the repetition") }
-      it {expect{
-                  described_class.new(@terminal_a, @repetition_comma, @repetition_comma)
-                }.to raise_error(RuleError, "nothing can follow the repetition") }
+    it "sets the subrules and translations when no input" do
+      expect_any_instance_of(described_class).to receive(:set_rule).with([]).and_call_original
+      expect_any_instance_of(described_class).to receive(:set_translation).with([]).and_call_original
+
+      described_class.new()
     end
   end
-=end
+
+  context ".valid_translation?" do
+    before(:all) do
+      @terminal_a       = Terminal.new("a")
+      @terminal_b       = Terminal.new(/b/)
+      @repetition_comma = Repetition.new( "," )
+
+      @tx_rep_set = TranslationRepetitionSet.new(2, 1)
+      @repeat_rule = [@terminal_a, @repetition_comma]
+    end
+
+    it { expect(described_class.new().valid_translation?).to be_truthy }
+    it { expect(described_class.new(@terminal_a).valid_translation?).to be_truthy }
+    it { expect(described_class.new(@repeat_rule).valid_translation?).to be_truthy }
+    it { expect(described_class.new(@repeat_rule, [2,1,@tx_rep_set]).valid_translation?).to be_truthy }
+
+    it "is not valid if a translation number is larger than the number of sub rules" do
+      expect(described_class.new(@repeat_rule, [3]).valid_translation?).to be_falsy
+    end
+
+    it "is not valid if a translation number is larger than the number of sub rules" do
+      expect(described_class.new(@repeat_rule, TranslationRepetitionSet.new(2, 4)).valid_translation?).to be_falsy
+    end
+
+    it "offset can be any positive number" do
+      expect(described_class.new(@repeat_rule, TranslationRepetitionSet.new(999, 2)).valid_translation?).to be_truthy
+    end
+  end
+
 =begin
   context ".match?" do
     context "returns false when the terminal is not found at the strings beginning" do
