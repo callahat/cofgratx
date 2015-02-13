@@ -1,11 +1,13 @@
 class TranslationRepetitionSet
 
+  attr_accessor :offset, :translations
+
   def initialize offset = 1, *translations
-    @offset = set_offset( offset )
-    @translations = set_translations( translations )
+    self.offset = offset
+    self.translations = translations
   end
 
-  def set_offset offset
+  def offset= offset
     if offset.class.name != "Fixnum"
       raise ArgumentError.new("expected Fixnum; got '#{offset.class.name}'")
     elsif offset <= 0
@@ -15,7 +17,7 @@ class TranslationRepetitionSet
     @offset = offset.to_i
   end
 
-  def set_translations *translations
+  def translations= *translations
     good_parts = []
     [ translations ].flatten.each do |translation|
       if ! [Fixnum, String].include? translation.class
