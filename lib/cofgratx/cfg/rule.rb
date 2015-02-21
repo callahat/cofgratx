@@ -47,26 +47,10 @@ class Rule
   end
 
   def match? candidate
-    working_candidate = candidate.dup
-    @rule.each do |subrule|
-      if subrule.class == Repetition
-        match, working_candidate = subrule.extract(working_candidate)
-        if match
-          more_match, working_candidate = self.match? working_candidate
-          return true if more_match
-        else
-          true
-        end
-      else #terminal
-        match, working_candidate = subrule.extract(working_candidate)
-        return false unless match
-      end
-    end
-    true
+    extract(candidate)[0] != nil
   end
 
   def extract candidate
-    return [nil, candidate] unless match? candidate
     working_candidate = candidate.dup
     current_match = ""
     @rule.each do |subrule|
