@@ -9,19 +9,12 @@ require 'cofgratx/cfg/rule'
 
 describe Rule do
   before(:all) do
-#    @terminal_bob =     Terminal.new( "bob" )
-#    @terminal_spaces =  Terminal.new( /\s+/ )
-#    @terminal_thing =   Terminal.new( /t.*n/ )
-#    @repetition_comma = Repetition.new( "," )
+    @terminal_a       = Terminal.new("a")
+    @terminal_b       = Terminal.new(/b/)
+    @repetition_comma = Repetition.new( "," )
   end
 
   context ".set_rule" do
-    before(:all) do
-      @terminal_a       = Terminal.new("a")
-      @terminal_b       = Terminal.new(/b/)
-      @repetition_comma = Repetition.new( "," )
-    end
-
     before do
       @rule = described_class.new
     end
@@ -79,10 +72,6 @@ describe Rule do
 
   context ".initialize" do
     before(:all) do
-      @terminal_a       = Terminal.new("a")
-      @terminal_b       = Terminal.new(/b/)
-      @repetition_comma = Repetition.new( "," )
-
       @tx_rep_set = TranslationRepetitionSet.new(1, 2, 4)
 
       @rule = [@terminal_a, @terminal_b]
@@ -113,10 +102,6 @@ describe Rule do
 
   context ".valid_translation?" do
     before(:all) do
-      @terminal_a       = Terminal.new("a")
-      @terminal_b       = Terminal.new(/b/)
-      @repetition_comma = Repetition.new( "," )
-
       @tx_rep_set = TranslationRepetitionSet.new(2, 1)
       @repeat_rule = [@terminal_a, @repetition_comma]
     end
@@ -142,11 +127,6 @@ describe Rule do
 
   context ".match?" do
     before(:all) do
-      @terminal_a       = Terminal.new("a")
-      @terminal_b       = Terminal.new(/b/)
-      @repetition_comma = Repetition.new( "," )
-
-      @tx_rep_set = TranslationRepetitionSet.new(2, 1)
       @term_rule = described_class.new [@terminal_a, @terminal_b]
       @repeat_rule = described_class.new [@terminal_a, @repetition_comma]
     end
@@ -171,28 +151,38 @@ describe Rule do
       it{ expect( @repeat_rule.match?("a,nothing else") ).to be_truthy }
     end
   end
-=begin
+
   context ".extract" do
-    context "returns nil and the unmodified string when the terminal is not found at the strings beginning" do
-      it{ expect( described_class.new("test").extract("no match") ).to match_array( [nil, "no match"] ) }
-      it{ expect( described_class.new("test").extract("no test first") ).to match_array( [nil, "no test first"] ) }
-      it{ expect( described_class.new(/tony/).extract("get some sandwiches") ).to match_array( [nil, "get some sandwiches"] ) }
-      it{ expect( described_class.new(/burgers/).extract("bob's burgers are better") ).to match_array( [nil, "bob's burgers are better"] ) }
-      it{ expect( described_class.new(/b.*s/).extract("hamburgers") ).to match_array( [nil, "hamburgers"] ) }
+    before(:all) do
+      @term_rule = described_class.new [@terminal_a, @terminal_b]
+      @repeat_rule = described_class.new [@terminal_a, @repetition_comma]
     end
 
-    context "returns the terminal match and remainder of string" do
+    context "returns nil and the unmodified string when the rule is not matched at the strings beginning" do
+      it{ expect( @term_rule.extract("aab") ).to match_array( [nil, "aab"] ) }
+      it{ expect( @term_rule.extract("b") ).to match_array( [nil, "b"] ) }
+      it{ expect( @term_rule.extract("here ababab") ).to match_array( [nil, "here ababab"] ) }
+      it{ expect( @term_rule.extract("") ).to match_array( [nil, ""] ) }
+      it{ expect( @repeat_rule.extract(",a") ).to match_array( [nil, ",a"] ) }
+      it{ expect( @repeat_rule.extract("b,a") ).to match_array( [nil, "b,a"] ) }
+      it{ expect( @repeat_rule.extract("") ).to match_array( [nil, ""] ) }
+      it{ expect( @repeat_rule.extract("no match") ).to match_array( [nil, "no match"] ) }
+    end
+
+    context "returns the rule match and remainder of string" do
       it "does not mutate the input string" do
         input_string = "Don't change me!"
-        expect( described_class.new("Don't change me!").extract(input_string) ).to match_array( ["Don't change me!", ""] )
+        expect( described_class.new(Terminal.new("Don't change me!")).extract(input_string) ).to match_array( ["Don't change me!", ""] )
         expect( input_string ).to match "Don't change me!"
       end
-      it{ expect( described_class.new("test").extract("test") ).to match_array( ["test", ""] ) }
-      it{ expect( described_class.new("test").extract("test first") ).to match_array( ["test", " first"] ) }
-      it{ expect( described_class.new(/tony/).extract("tony, get some sandwiches") ).to match_array( ["tony", ", get some sandwiches"] ) }
-      it{ expect( described_class.new(/burgers/).extract("burgers by bob are better") ).to match_array( ["burgers", " by bob are better"] ) }
-      it{ expect( described_class.new(/b.*?s/).extract("burgers and hams") ).to match_array( ["burgers", " and hams"] ) }
+
+      it{ expect( @term_rule.extract("ab") ).to match_array( ["ab", ""] ) }
+      it{ expect( @term_rule.extract("ab something else") ).to match_array( ["ab", " something else"] ) }
+      it{ expect( @repeat_rule.extract("a,") ).to match_array( ["a", ","] ) }
+      it{ expect( @repeat_rule.extract("a,a") ).to match_array( ["a,a", ""] ) }
+      it{ expect( @repeat_rule.extract("anothing") ).to match_array( ["a", "nothing"] ) }
+      it{ expect( @repeat_rule.extract("a,nothing else") ).to match_array( ["a", ",nothing else"] ) }
     end
   end
-=end
+
 end
