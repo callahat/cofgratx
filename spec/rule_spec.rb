@@ -139,25 +139,39 @@ describe Rule do
     end
   end
 
-=begin
+
   context ".match?" do
-    context "returns false when the terminal is not found at the strings beginning" do
-      it{ expect( described_class.new("test").match?("no match") ).to be_falsey }
-      it{ expect( described_class.new("test").match?("no test first") ).to be_falsey }
-      it{ expect( described_class.new(/tony/).match?("get some sandwiches") ).to be_falsey }
-      it{ expect( described_class.new(/burgers/).match?("bob's burgers are better") ).to be_falsey }
-      it{ expect( described_class.new(/b.*s/).match?("hamburgers") ).to be_falsey }
+    before(:all) do
+      @terminal_a       = Terminal.new("a")
+      @terminal_b       = Terminal.new(/b/)
+      @repetition_comma = Repetition.new( "," )
+
+      @tx_rep_set = TranslationRepetitionSet.new(2, 1)
+      @term_rule = described_class.new [@terminal_a, @terminal_b]
+      @repeat_rule = described_class.new [@terminal_a, @repetition_comma]
     end
 
-    context "returns true when the terminal is found at the start of the string" do
-      it{ expect( described_class.new("test").match?("test") ).to be_truthy }
-      it{ expect( described_class.new("test").match?("test first") ).to be_truthy }
-      it{ expect( described_class.new(/tony/).match?("tony, get some sandwiches") ).to be_truthy }
-      it{ expect( described_class.new(/burgers/).match?("burgers by bob are better") ).to be_truthy }
-      it{ expect( described_class.new(/b.*s/).match?("burgers and hams") ).to be_truthy }
+    context "returns false when the rule does not match a substring starting at the strings beginning" do
+      it{ expect( @term_rule.match?("aab") ).to be_falsey }
+      it{ expect( @term_rule.match?("b") ).to be_falsey }
+      it{ expect( @term_rule.match?("here ababab") ).to be_falsey }
+      it{ expect( @term_rule.match?("") ).to be_falsey }
+      it{ expect( @repeat_rule.match?(",a") ).to be_falsey }
+      it{ expect( @repeat_rule.match?("b,a") ).to be_falsey }
+      it{ expect( @repeat_rule.match?("") ).to be_falsey }
+      it{ expect( @repeat_rule.match?("no match") ).to be_falsey }
+    end
+
+    context "returns true when the rule matches a substring starting at the strings beginning" do
+      it{ expect( @term_rule.match?("ab") ).to be_truthy }
+      it{ expect( @term_rule.match?("ab something else") ).to be_truthy }
+      it{ expect( @repeat_rule.match?("a,") ).to be_truthy }
+      it{ expect( @repeat_rule.match?("a,a") ).to be_truthy }
+      it{ expect( @repeat_rule.match?("anothing") ).to be_truthy }
+      it{ expect( @repeat_rule.match?("a,nothing else") ).to be_truthy }
     end
   end
-
+=begin
   context ".extract" do
     context "returns nil and the unmodified string when the terminal is not found at the strings beginning" do
       it{ expect( described_class.new("test").extract("no match") ).to match_array( [nil, "no match"] ) }
