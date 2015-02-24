@@ -53,23 +53,55 @@ class Rule
   def extract candidate
     working_candidate = candidate.dup
     current_match = ""
+    current_set = [[]]
     @rule.each do |subrule|
       if subrule.class == Repetition
         match, temp_working_candidate = subrule.extract(working_candidate)
         if match
-          more_match, repetition_working_candidate = self.extract temp_working_candidate
+          more_match, repetition_working_candidate, repetition_current_set = self.extract(temp_working_candidate)
           if more_match
+            current_set.first << match
+            repetition_current_set.unshift current_set.first
+            current_set = repetition_current_set
             current_match += match + more_match
             working_candidate = repetition_working_candidate
           end
         end
       else #terminal
         match, working_candidate = subrule.extract(working_candidate)
-        return [nil, candidate] unless match
+        return [ nil, candidate, [[]] ] unless match
         current_match += match
+        current_set.first << match
       end
     end
-    [current_match, working_candidate]
+    [current_match, working_candidate, current_set]
   end
+
+  def translate candidate
+    current_match, working_candidate, current_set = extract candidate
+    return [nil, candidate] unless current_match
+    current_translation = ""
+    @translation.each do |sub_translation|
+      if sub_translation.class == TranslationRepetitionSet
+        current_set[(sub_translation.offset-1)..-1].each do |current|
+          sub_translation.translations.each do |translation|
+            current_translation += translation_helper current, translation
+          end
+        end
+      else
+        current_translation += translation_helper current_set.first, sub_translation
+      end
+    end
+    [current_translation, working_candidate]
+  end
+
+  protected
+    def translation_helper current_set, translation
+      if translation.class == Fixnum
+        current_set[translation-1].to_s
+      else
+        translation
+      end
+    end
 
 end
