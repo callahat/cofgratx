@@ -19,13 +19,24 @@ class NonTerminal
 
   def extract string
     matches = @rules.inject([]) do |matches, rule|
-      match, remainder = rule.extract string
-      matches << [match, remainder] if match
+      match, remainder, match_set = rule.extract string
+      matches << [match, remainder, match_set] if match
       matches
     end
 
-    return [ [nil, string ] ] if matches.length == 0
+    return [ [nil, string, [[]]] ] if matches.length == 0
     matches
+  end
+
+  def translate string
+    translations = @rules.inject([]) do |translations, rule|
+      translation, remainder = rule.translate string
+      translations << [translation, remainder] if translation
+      translations
+    end
+
+    return [ [nil, string] ] if translations.length == 0
+    translations
   end
 
   protected

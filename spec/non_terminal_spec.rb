@@ -63,29 +63,51 @@ describe NonTerminal do
 
     context "returns nil and the unmodified string when the terminal is not found at the strings beginning" do
       before do
-        allow(@rule).to receive(:extract){ |param| [nil, param] }
-        allow(@rule2).to receive(:extract){ |param| [nil, param] }
+        allow(@rule).to receive(:extract){ |param| [nil, param, [[]]] }
+        allow(@rule2).to receive(:extract){ |param| [nil, param, [[]]] }
       end
-      it{ expect( described_class.new().extract("no match") ).to match_array( [ [nil,"no match"] ] ) }
-      it{ expect( described_class.new(@rule).extract("still no match") ).to match_array( [ [nil,"still no match"] ] ) }
-      it{ expect( described_class.new(@rule,@rule2).extract("stubbed so no match") ).to match_array( [ [nil,"stubbed so no match"] ] ) }
+      it{ expect( described_class.new().extract("no match") ).to match_array( [ [nil,"no match",[[]]] ] ) }
+      it{ expect( described_class.new(@rule).extract("still no match") ).to match_array( [ [nil,"still no match",[[]]] ] ) }
+      it{ expect( described_class.new(@rule,@rule2).extract("stubbed so no match") ).to match_array( [ [nil,"stubbed so no match",[[]]] ] ) }
     end
 
     context "returns the terminal match and remainder of string" do
       before do
-        allow(@rule).to receive(:extract){ |param| [nil, param] }
-        allow(@rule2).to receive(:extract){ |param| ["D", param[1..-1] ] }
-        allow(@rule3).to receive(:extract){ |param| ["Don", param[3..-1] ] }
+        allow(@rule).to receive(:extract){ |param| [nil, param, [[]]] }
+        allow(@rule2).to receive(:extract){ |param| ["D", param[1..-1], [["D"]] ] }
+        allow(@rule3).to receive(:extract){ |param| ["Don", param[3..-1], [["Don"]] ] }
       end
       it "does not mutate the input string" do
         input_string = "Don't change me!"
-        expect( described_class.new(@rule2,@rule,@rule3).extract(input_string) ).to match_array( [ ["D","on't change me!"], ["Don","'t change me!"] ] )
+        expect( described_class.new(@rule2,@rule,@rule3).extract(input_string) ).to match_array( [ ["D","on't change me!",[["D"]]], ["Don","'t change me!", [["Don"]]] ] )
         expect( input_string ).to match "Don't change me!"
       end
-      it{ expect( described_class.new(@rule,@rule3).extract("Donald") ).to match_array( [ ["Don","ald"] ] ) }
-      it{ expect( described_class.new(@rule,@rule3,@rule2).extract("Donald") ).to match_array( [ ["D","onald"], ["Don","ald"] ] ) }
-      it{ expect( described_class.new(@rule2).extract("Donald") ).to match_array( [ ["D","onald"] ] ) }
+      it{ expect( described_class.new(@rule,@rule3).extract("Donald") ).to match_array( [ ["Don","ald",[["Don"]]] ] ) }
+      it{ expect( described_class.new(@rule,@rule3,@rule2).extract("Donald") ).to match_array( [ ["D","onald",[["D"]]], ["Don","ald",[["Don"]]] ] ) }
+      it{ expect( described_class.new(@rule2).extract("Donald") ).to match_array( [ ["D","onald",[["D"]]] ] ) }
     end
   end
 
+  context ".translate" do
+    before do
+      @rule = Rule.new
+      @rule2 = Rule.new
+      @rule3 = Rule.new
+
+      allow(@rule).to receive(:translate){ |param| [nil, param] }
+      allow(@rule2).to receive(:translate){ |param| ["ba", param[2..-1] ] }
+      allow(@rule3).to receive(:translate){ |param| ["bba", param[3..-1] ] }
+    end
+
+    it "does not mutate the input string" do
+      input_string = "abb"
+      expect( described_class.new(@rule2,@rule,@rule3).translate(input_string) ).to match_array( [ ["ba","b"], ["bba",""] ] )
+      expect( input_string ).to match "abb"
+    end
+
+    it{ expect( described_class.new(@rule).translate("ab") ).to match_array( [ [nil, "ab"] ] ) }
+    it{ expect( described_class.new(@rule,@rule2).translate("abba") ).to match_array( [ ["ba", "ba"] ] ) }
+    it{ expect( described_class.new(@rule,@rule2).translate("abba") ).to match_array( [ ["ba", "ba"] ] ) }
+    it{ expect( described_class.new(@rule,@rule2,@rule3).translate("abbadabab") ).to match_array( [ ["ba", "badabab"], ["bba", "adabab"] ] ) }
+  end
 end
