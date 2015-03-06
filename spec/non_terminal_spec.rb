@@ -63,8 +63,8 @@ describe NonTerminal do
 
     context "returns nil and the unmodified string when the terminal is not found at the strings beginning" do
       before do
-        allow(@rule).to receive(:extract){ |param| [nil, param, [[]]] }
-        allow(@rule2).to receive(:extract){ |param| [nil, param, [[]]] }
+        allow(@rule).to receive(:extract){ |param| [ [nil,param,[[]]] ] }
+        allow(@rule2).to receive(:extract){ |param| [ [nil,param,[[]]] ] }
       end
       it{ expect( described_class.new().extract("no match") ).to match_array( [ [nil,"no match",[[]]] ] ) }
       it{ expect( described_class.new(@rule).extract("still no match") ).to match_array( [ [nil,"still no match",[[]]] ] ) }
@@ -73,9 +73,9 @@ describe NonTerminal do
 
     context "returns the terminal match and remainder of string" do
       before do
-        allow(@rule).to receive(:extract){ |param| [nil, param, [[]]] }
-        allow(@rule2).to receive(:extract){ |param| ["D", param[1..-1], [["D"]] ] }
-        allow(@rule3).to receive(:extract){ |param| ["Don", param[3..-1], [["Don"]] ] }
+        allow(@rule).to receive(:extract){ |param| [ [nil,param,[[]]] ] }
+        allow(@rule2).to receive(:extract){ |param| [ ["D",param[1..-1],[["D"]]] ] }
+        allow(@rule3).to receive(:extract){ |param| [ ["Don",param[3..-1],[["Don"]]] ] }
       end
       it "does not mutate the input string" do
         input_string = "Don't change me!"

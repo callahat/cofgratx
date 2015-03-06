@@ -19,8 +19,8 @@ class NonTerminal
 
   def extract string
     matches = @rules.inject([]) do |matches, rule|
-      match, remainder, match_set = rule.extract string
-      matches << [match, remainder, match_set] if match
+      rule_matches = rule.extract string
+      matches.concat rule_matches if rule_matches.first[0]
       matches
     end
 
