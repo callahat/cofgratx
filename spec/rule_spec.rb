@@ -167,48 +167,51 @@ describe Rule do
     end
   end
 
-  context ".extract" do
+  context ".extract - matching string" do
     before(:all) do
       @term_rule = described_class.new [@terminal_a, @terminal_b]
       @repeat_rule = described_class.new [@terminal_a, @repetition_comma]
       @nonterminal_rule = NonTerminal.new(@term_rule)
-      @mix_rule = described_class.new [@terminal_a, @nonterminal_rule]
+      @mix_rule = described_class.new [@terminal_a, @nonterminal_rule, @repetition_comma]
     end
 
     context "returns nil and the unmodified string when the rule is not matched at the strings beginning" do
-      it{ expect( @term_rule.extract("aab") ).to match_array( [ [nil,"aab",[[]]] ] ) }
-      it{ expect( @term_rule.extract("b") ).to match_array( [ [nil,"b",[[]]] ] ) }
-      it{ expect( @term_rule.extract("here ababab") ).to match_array( [ [nil,"here ababab",[[]]] ] ) }
-      it{ expect( @term_rule.extract("") ).to match_array( [ [nil,"",[[]]] ] ) }
-      it{ expect( @repeat_rule.extract(",a") ).to match_array( [ [nil,",a",[[]]] ] ) }
-      it{ expect( @repeat_rule.extract("b,a") ).to match_array( [ [nil,"b,a",[[]]] ] ) }
-      it{ expect( @repeat_rule.extract("") ).to match_array( [ [nil,"",[[]]] ] ) }
-      it{ expect( @repeat_rule.extract("no match") ).to match_array( [ [nil,"no match",[[]]] ] ) }
-      it{ expect( @mix_rule.extract("abb") ).to match_array( [ [nil,"abb",[[]]] ] ) }
-      it{ expect( @mix_rule.extract("b") ).to match_array( [ [nil,"b",[[]]] ] ) }
-      it{ expect( @mix_rule.extract("daab") ).to match_array( [ [nil,"daab",[[]]] ] ) }
-      it{ expect( @mix_rule.extract("") ).to match_array( [ [nil,"",[[]]] ] ) }
+      it{ expect( @term_rule.extract("aab") ).to match_array( [ [nil,"aab",nil] ] ) }
+      it{ expect( @term_rule.extract("b") ).to match_array( [ [nil,"b",nil] ] ) }
+      it{ expect( @term_rule.extract("here ababab") ).to match_array( [ [nil,"here ababab",nil] ] ) }
+      it{ expect( @term_rule.extract("") ).to match_array( [ [nil,"",nil] ] ) }
+      it{ expect( @repeat_rule.extract(",a") ).to match_array( [ [nil,",a",nil] ] ) }
+      it{ expect( @repeat_rule.extract("b,a") ).to match_array( [ [nil,"b,a",nil] ] ) }
+      it{ expect( @repeat_rule.extract("") ).to match_array( [ [nil,"",nil] ] ) }
+      it{ expect( @repeat_rule.extract("no match") ).to match_array( [ [nil,"no match",nil] ] ) }
+      it{ expect( @mix_rule.extract("abb") ).to match_array( [ [nil,"abb",nil] ] ) }
+      it{ expect( @mix_rule.extract("b") ).to match_array( [ [nil,"b",nil] ] ) }
+      it{ expect( @mix_rule.extract("daab") ).to match_array( [ [nil,"daab",nil] ] ) }
+      it{ expect( @mix_rule.extract("") ).to match_array( [ [nil,"",nil] ] ) }
     end
 
     context "returns the rule match and remainder of string" do
       it "does not mutate the input string" do
         input_string = "Don't change me!"
-        expect( described_class.new(Terminal.new("Don't change me!")).extract(input_string) ).to match_array( [ ["Don't change me!","",[["Don't change me!"]]] ] )
+        expect( described_class.new(Terminal.new("Don't change me!")).extract(input_string) ).to match_array( [ ["Don't change me!","","Don't change me!"] ] )
         expect( input_string ).to match "Don't change me!"
       end
 
-      it{ expect( @term_rule.extract("ab") ).to match_array( [ ["ab","",[["a","b"]]] ] ) }
-      it{ expect( @term_rule.extract("ab something else") ).to match_array( [ ["ab"," something else",[["a","b"]]] ] ) }
-      it{ expect( @repeat_rule.extract("a,") ).to match_array( [ ["a",",",[["a"]]] ] ) }
-      it{ expect( @repeat_rule.extract("a,a") ).to match_array( [ ["a,a","",[["a",","],["a"]]] ] ) }
-      it{ expect( @repeat_rule.extract("anothing") ).to match_array( [ ["a","nothing",[["a"]]] ] ) }
-      it{ expect( @repeat_rule.extract("a,nothing else") ).to match_array( [ ["a",",nothing else",[["a"]]] ] ) }
-      it{ expect( @repeat_rule.extract("a,a,anothing else") ).to match_array( [ ["a,a,a","nothing else",[["a",","],["a",","],["a"]]] ] ) }
-      it{ expect( @repeat_rule.extract("a,a,a,nothing else") ).to match_array( [ ["a,a,a",",nothing else",[["a",","],["a",","],["a"]]] ] ) }
+      it{ expect( @term_rule.extract("ab") ).to match_array( [ ["ab","","ab"] ] ) }
+      it{ expect( @term_rule.extract("ab something else") ).to match_array( [ ["ab"," something else","ab"] ] ) }
+      it{ expect( @repeat_rule.extract("a,") ).to match_array( [ ["a",",","a"] ] ) }
+      it{ expect( @repeat_rule.extract("a,a") ).to match_array( [ ["a,a","","a,a"] ] ) }
+      it{ expect( @repeat_rule.extract("anothing") ).to match_array( [ ["a","nothing","a"] ] ) }
+      it{ expect( @repeat_rule.extract("a,nothing else") ).to match_array( [ ["a",",nothing else","a"] ] ) }
+      it{ expect( @repeat_rule.extract("a,a,anothing else") ).to match_array( [ ["a,a,a","nothing else","a,a,a"] ] ) }
+      it{ expect( @repeat_rule.extract("a,a,a,nothing else") ).to match_array( [ ["a,a,a",",nothing else","a,a,a"] ] ) }
+      it{ expect( @mix_rule.extract "aab" ).to match_array( [ ["aab","","aab"] ] ) }
+      it{ expect( @mix_rule.extract "aab," ).to match_array( [ ["aab",",","aab"] ] ) }
+      it{ expect( @mix_rule.extract "aab,aab" ).to match_array( [ ["aab,aab","","aab,aab"] ] ) }
     end
   end
 
-  context ".translate" do
+  context ".extract - translation string" do
     before(:all) do
       @tx_rep_set = TranslationRepetitionSet.new(2, " repeats:", 2, 1, 3)
       @simple_rule = described_class.new [@terminal_a, @terminal_b], [2,1]
@@ -220,21 +223,22 @@ describe Rule do
 
     it "does not modify the original parameter" do
       original_string = "ab"
-      expect( @simple_rule.translate original_string ).to match_array( [ ["ba",""] ] )
+      expect( @simple_rule.extract original_string ).to match_array( [ ["ab","", "ba"] ] )
       expect( original_string ).to match "ab"
     end
 
-    it { expect( @simple_rule.translate "abab" ).to match_array( [ ["ba","ab"] ] ) }
-    it { expect( @simple_rule.translate "ab and nothing else" ).to match_array( [ ["ba"," and nothing else"] ] ) }
-    it { expect( @simple_rule2.translate "abab" ).to match_array( [ ["babmoo","ab"] ] ) }
-    it { expect( @simple_rule2.translate "ab and nothing else" ).to match_array( [ ["babmoo"," and nothing else"] ] ) }
+    it { expect( @simple_rule.extract "abab" ).to match_array( [ ["ab","ab", "ba"] ] ) }
+    it { expect( @simple_rule.extract "ab and nothing else" ).to match_array( [ ["ab"," and nothing else","ba"] ] ) }
+    it { expect( @simple_rule2.extract "abab" ).to match_array( [ ["ab","ab","babmoo"] ] ) }
+    it { expect( @simple_rule2.extract "ab and nothing else" ).to match_array( [ ["ab"," and nothing else","babmoo"] ] ) }
 
-    it { expect( @repeat_rule.translate "ab," ).to match_array( [ ["ba",","] ] ) }
-    it { expect( @repeat_rule.translate "ab,ab" ).to match_array( [ [",ba repeats:ba",""] ] ) }
-    it { expect( @repeat_rule.translate "ab,ab,ab" ).to match_array( [ [",ba repeats:ba, repeats:ba",""] ] ) }
-    it { expect( @repeat_rule.translate "ab,ab,ab," ).to match_array( [ [",ba repeats:ba, repeats:ba",","] ] ) }
+    it { expect( @repeat_rule.extract "ab," ).to match_array( [ ["ab",",","ba"] ] ) }
+    it { expect( @repeat_rule.extract "ab,ab" ).to match_array( [ ["ab,ab","",",ba repeats:ba"] ] ) }
+    it { expect( @repeat_rule.extract "ab,ab,ab" ).to match_array( [ ["ab,ab,ab","",",ba repeats:ba, repeats:ba"] ] ) }
+    it { expect( @repeat_rule.extract "ab,ab,ab," ).to match_array( [ ["ab,ab,ab",",",",ba repeats:ba, repeats:ba"] ] ) }
 
-    #it { expect( @mix_rule.translate "aab," ).to match_array( [ ["baa",","] ] ) }
+    it { expect( @mix_rule.extract "aab," ).to match_array( [ ["aab",",","baa"] ] ) }
 
   end
+
 end

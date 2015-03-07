@@ -20,11 +20,16 @@ class NonTerminal
   def extract string
     matches = @rules.inject([]) do |matches, rule|
       rule_matches = rule.extract string
+      p "hmm"
+      p rule_matches
       matches.concat rule_matches if rule_matches.first[0]
       matches
     end
 
-    return [ [nil, string, [[]]] ] if matches.length == 0
+    p ",atches"
+    p matches
+
+    return [ [nil, string, nil] ] if matches.length == 0
     matches
   end
 

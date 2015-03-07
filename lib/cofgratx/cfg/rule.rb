@@ -52,13 +52,12 @@ class Rule
 
   def extract candidate
     working_matches = [ ["",candidate.dup,[[]]] ]
-
     @rule.each do |subrule|
       surviving_matches = []
       working_matches.each do |current_match, working_candidate, current_set|
 
         if subrule.class == Repetition
-          surviving_matches.concat extract_repetition_character subrule, current_match.dup, current_set.dup, working_candidate.dup
+          surviving_matches.concat extract_repetition_character( subrule, current_match.dup, current_set.dup, working_candidate.dup )
         elsif subrule.class == Terminal
           match, working_candidate = subrule.extract working_candidate
           if match
@@ -68,7 +67,9 @@ class Rule
         elsif subrule.class == NonTerminal
           matches = subrule.extract working_candidate
           if matches.first[0]
-            surviving_matches.concat matches
+            matches.each do |match, working_candidate, set|
+              surviving_matches << [ current_match + match, working_candidate.dup, current_set << [ set ] ]
+            end
           end
         else
           raise "Rule is corrupt, found a bad subrule:#{subrule} with class:#{subrule.class}"
@@ -76,10 +77,50 @@ class Rule
       end
       working_matches = surviving_matches.dup
     end
-    return [ [nil,candidate,[[]]] ] if working_matches.size == 0
+    return [ [nil,candidate,nil] ] if working_matches.size == 0
+
+     p "Working candidate"
+     p working_matches
+    
+    working_matches.map{|match|
+      current_set = match[2]
+      current_translation = ""
+      @translation.each do |sub_translation|
+      p "sub trans"
+      p sub_translation
+      p current_set
+        if sub_translation.class == TranslationRepetitionSet
+        p "yup, here"
+        p (sub_translation.offset-1)*@rule.size
+        p current_set
+        p @rule.size
+          (((sub_translation.offset-1)*@rule.size)..current_set.size).step(@rule.size).each do |index|
+          p "ined"
+           p index
+           p sub_translation
+            #current_set[(sub_translation.offset-1)..-1].each do |current|
+            sub_translation.translations.each do |translation|
+              current_translation += translation_helper current_set, index, translation
+            end
+          end
+        else
+          current_translation += translation_helper current_set.first, 0, sub_translation
+        end
+        p "noew translation is:"
+            p current_translation
+      end
+      if @translation.size == 0
+        #no translation happening
+        match[2] = match[0].dup
+      else
+        match[2] = current_translation
+      end
+      match
+    }
+    
     working_matches
   end
-
+=begin
   def translate candidate
     matches = extract candidate
     p matches
@@ -91,7 +132,7 @@ class Rule
       @translation.each do |sub_translation|
       p current_translation
         if sub_translation.class == TranslationRepetitionSet
-          current_set[(sub_translation.offset-1)..-1].each do |current|
+          current_set[(sub_translation.offset*@rule.size-1)..-1].each do |current|
             sub_translation.translations.each do |translation|
               current_translation += translation_helper current, translation
             end
@@ -103,11 +144,11 @@ class Rule
       txs << [current_translation, working_candidate]
     end
   end
-
+=end
   protected
-    def translation_helper current_set, translation
+    def translation_helper current_set, index, translation
       if translation.class == Fixnum
-        current_set[translation-1].to_s
+        current_set[index + translation - 1].to_s
       else
         translation
       end
@@ -120,20 +161,24 @@ class Rule
         matches = self.extract(temp_working_candidate)
         matches.each do |more_match, repetition_working_candidate, repetition_current_set|
           if more_match
-            first_current_set = current_set.first.dup
+            current_set << [ match ]
 
-            first_current_set << match
-
-            repetition_current_set.unshift first_current_set
+            current_set.concat [repetition_current_set]
 
             working_candidate = repetition_working_candidate
             additional_productions << [ current_match + match + more_match,
                                          repetition_working_candidate.dup,
-                                         repetition_current_set.dup ]
+                                         current_set.dup ]
           end
         end
       end
       return [ [current_match, working_candidate, current_set] ] if additional_productions.size == 0
       additional_productions
+    end
+
+    def copy_set set
+      set.inject([]){|cloned_set, element|
+        cloned_set << element
+      }
     end
 end
