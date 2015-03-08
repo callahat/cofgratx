@@ -210,12 +210,14 @@ describe Rule do
 
   context ".translate" do
     before(:all) do
+      @terminal_c = Terminal.new("c")
       @tx_rep_set = TranslationRepetitionSet.new(2, " repeats:", 2, 1, 3)
       @simple_rule = described_class.new [@terminal_a, @terminal_b], [2,1]
       @simple_rule2 = described_class.new [@terminal_a, @terminal_b], [2,1,2,"moo"]
       @repeat_rule = described_class.new [@terminal_a, @terminal_b, @repetition_comma], [3,2,1,@tx_rep_set]
       @nonterminal_rule = NonTerminal.new(@simple_rule)
-      @mix_rule = described_class.new [@terminal_a, @nonterminal_rule], [2,1]
+      @mix_rule = described_class.new [Terminal.new("c"), @nonterminal_rule], [2,1]
+      @mix_rule_repeat = described_class.new [@terminal_c, @nonterminal_rule, @repetition_comma], [3,2,1,@tx_rep_set]
     end
 
     it "does not modify the original parameter" do
@@ -234,7 +236,12 @@ describe Rule do
     it { expect( @repeat_rule.translate "ab,ab,ab" ).to match_array( [ [",ba repeats:ba, repeats:ba",""] ] ) }
     it { expect( @repeat_rule.translate "ab,ab,ab," ).to match_array( [ [",ba repeats:ba, repeats:ba",","] ] ) }
 
-    #it { expect( @mix_rule.translate "aab," ).to match_array( [ ["baa",","] ] ) }
+    it { expect( @mix_rule.translate "cab" ).to match_array( [ ["bac",""] ] ) }
+    it { expect( @mix_rule.translate "cab," ).to match_array( [ ["bac",","] ] ) }
+    it { expect( @mix_rule.translate "cab,cab" ).to match_array( [ ["bac",",cab"] ] ) }
+    it { expect( @mix_rule_repeat.translate "cab," ).to match_array( [ ["bac",","] ] ) }
+    it { expect( @mix_rule_repeat.translate "cab,cab" ).to match_array( [ [",bac repeats:bac",""] ] ) }
+    it { expect( @mix_rule_repeat.translate "cab,cab,cab" ).to match_array( [ [",bac repeats:bac, repeats:bac",""] ] ) }
 
   end
 end

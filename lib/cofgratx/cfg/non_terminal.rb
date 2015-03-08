@@ -30,12 +30,14 @@ class NonTerminal
 
   def translate string
     translations = @rules.inject([]) do |translations, rule|
-      translation, remainder = rule.translate string
-      translations << [translation, remainder] if translation
+      rule.translate( string ).each do |translation, remainder|
+        translations << [translation, remainder] if translation
+      end
       translations
     end
 
     return [ [nil, string] ] if translations.length == 0
+
     translations
   end
 

@@ -94,9 +94,9 @@ describe NonTerminal do
       @rule2 = Rule.new
       @rule3 = Rule.new
 
-      allow(@rule).to receive(:translate){ |param| [nil, param] }
-      allow(@rule2).to receive(:translate){ |param| ["ba", param[2..-1] ] }
-      allow(@rule3).to receive(:translate){ |param| ["bba", param[3..-1] ] }
+      allow(@rule).to receive(:translate){ |param| [[nil, param]] }
+      allow(@rule2).to receive(:translate){ |param| [["ba", param[2..-1]]] }
+      allow(@rule3).to receive(:translate){ |param| [["bba", param[3..-1]]] }
     end
 
     it "does not mutate the input string" do

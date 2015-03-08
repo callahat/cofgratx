@@ -50,7 +50,7 @@ class Rule
     extract(candidate).first[0] != nil
   end
 
-  def extract candidate
+  def extract candidate, translate_non_terminals = false
     working_matches = [ ["",candidate.dup,[[]]] ]
 
     @rule.each do |subrule|
@@ -58,7 +58,7 @@ class Rule
       working_matches.each do |current_match, working_candidate, current_set|
 
         if subrule.class == Repetition
-          surviving_matches.concat extract_repetition_character subrule, current_match.dup, current_set.dup, working_candidate.dup
+          surviving_matches.concat extract_repetition_character subrule, current_match.dup, current_set.dup, working_candidate.dup, translate_non_terminals
         elsif subrule.class == Terminal
           match, working_candidate = subrule.extract working_candidate
           if match
@@ -66,7 +66,13 @@ class Rule
             surviving_matches << [ current_match + match, working_candidate.dup, current_set.dup ]
           end
         elsif subrule.class == NonTerminal
-          matches = subrule.extract working_candidate
+          matches = if translate_non_terminals
+                      translations = subrule.translate(working_candidate)
+                      translations.map{|tx| tx[2] = current_set; tx[2].first << tx[0]; tx }
+                    else
+                      subrule.extract(working_candidate)
+                    end
+                    
           if matches.first[0]
             surviving_matches.concat matches
           end
@@ -77,19 +83,18 @@ class Rule
       working_matches = surviving_matches.dup
     end
     return [ [nil,candidate,[[]]] ] if working_matches.size == 0
+
     working_matches
   end
 
   def translate candidate
-    matches = extract candidate
-    p matches
+    matches = extract candidate, true
+
     matches.inject([]) do |txs, match|
       current_match, working_candidate, current_set = match
       return [nil, candidate] unless current_match
-      p match
       current_translation = ""
       @translation.each do |sub_translation|
-      p current_translation
         if sub_translation.class == TranslationRepetitionSet
           current_set[(sub_translation.offset-1)..-1].each do |current|
             sub_translation.translations.each do |translation|
@@ -113,11 +118,11 @@ class Rule
       end
     end
 
-    def extract_repetition_character subrule, current_match, current_set, working_candidate
+    def extract_repetition_character subrule, current_match, current_set, working_candidate, translate_non_terminals
       match, temp_working_candidate = subrule.extract(working_candidate)
       additional_productions = []
       if match
-        matches = self.extract(temp_working_candidate)
+        matches = self.extract(temp_working_candidate,translate_non_terminals)
         matches.each do |more_match, repetition_working_candidate, repetition_current_set|
           if more_match
             first_current_set = current_set.first.dup
