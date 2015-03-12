@@ -1,8 +1,13 @@
 class Rule
+  attr_reader :rule, :translation
 
   def initialize subrules = [], translations = []
     @rule = set_rule subrules
     @translation = set_translation translations
+  end
+
+  def === other_rule
+    @rule == other_rule.rule and @translation == other_rule.translation
   end
 
   def set_rule *rule
@@ -72,7 +77,7 @@ class Rule
                     else
                       subrule.extract(working_candidate)
                     end
-                    
+
           if matches.first[0]
             surviving_matches.concat matches
           end

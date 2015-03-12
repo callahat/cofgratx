@@ -244,4 +244,22 @@ describe Rule do
     it { expect( @mix_rule_repeat.translate "cab,cab,cab" ).to match_array( [ [",bac repeats:bac, repeats:bac",""] ] ) }
 
   end
+
+  context "===" do
+    before(:all) do
+      @tx_rep_set = TranslationRepetitionSet.new(1, 2, 4)
+
+      @rule = [@terminal_a, @terminal_b]
+      @translation = [1, 2, @tx_rep_set]
+
+      @rule_a = described_class.new(@rule)
+      @rule_b = described_class.new(@rule)
+    end
+
+    it { expect( @rule_a == @rule_b ).to be_falsy }
+    it { expect( @rule_a === @rule_b ).to be_truthy }
+
+    it { expect( @rule_a == @rule_a ).to be_truthy }
+    it { expect( @rule_a === @rule_a ).to be_truthy }
+  end
 end
