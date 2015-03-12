@@ -6,10 +6,6 @@ class Rule
     @translation = set_translation translations
   end
 
-  def === other_rule
-    @rule == other_rule.rule and @translation == other_rule.translation
-  end
-
   def set_rule *rule
     good_parts = []
     rule.flatten(2).each do |part|
