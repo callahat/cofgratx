@@ -21,6 +21,11 @@ describe NonTerminal do
       expect{ described_class.new(@rule, @rule2) }.to_not raise_error
     end
 
+    it "can initialize with a set of rules and ignores duplicates" do
+      @non_terminal = described_class.new(@rule, @rule2)
+      expect( @non_terminal.instance_variable_get("@rules").size ).to equal 1
+    end
+
     it "raises an exception on bad initial objects" do
       expect{ described_class.new(@rule, 12345) }.to raise_error(ArgumentError, "expected a list of Rules; found bad items: " +
                                [12345].map{|bad_arg| "#{bad_arg.class.name} #{bad_arg}"}.join("\n"))
@@ -31,6 +36,8 @@ describe NonTerminal do
     before do
       @rule = Rule.new
       @rule2 = Rule.new
+      @rule.instance_variable_set("@rule", [/a/])
+      @rule2.instance_variable_set("@rule", [/b/])
     end
 
     context "returns false when the non terminal has no matching rules at the strings beginning" do
@@ -59,6 +66,9 @@ describe NonTerminal do
       @rule = Rule.new
       @rule2 = Rule.new
       @rule3 = Rule.new
+      @rule.instance_variable_set("@rule", [/a/])
+      @rule2.instance_variable_set("@rule", [/b/])
+      @rule2.instance_variable_set("@rule", [/c/])
     end
 
     context "returns nil and the unmodified string when the terminal is not found at the strings beginning" do
@@ -93,6 +103,9 @@ describe NonTerminal do
       @rule = Rule.new
       @rule2 = Rule.new
       @rule3 = Rule.new
+      @rule.instance_variable_set("@rule", [/a/])
+      @rule2.instance_variable_set("@rule", [/b/])
+      @rule2.instance_variable_set("@rule", [/c/])
 
       allow(@rule).to receive(:translate){ |param| [[nil, param]] }
       allow(@rule2).to receive(:translate){ |param| [["ba", param[2..-1]]] }

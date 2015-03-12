@@ -3,11 +3,13 @@ class NonTerminal
   def initialize *rules
     validate_list_of_rules *rules
     @rules = rules.to_a
+    @rules.uniq!{|r| [r.rule, r.translation]}
   end
 
   def add_rules *rules
     validate_list_of_rules *rules
     @rules.push *rules
+    @rules.uniq!{|r| [r.rule, r.translation]}
   end
 
   def match? string
