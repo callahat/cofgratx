@@ -59,22 +59,23 @@ class Rule
       working_matches.each do |current_match, working_candidate, current_set|
 
         if subrule.class == Repetition
-          surviving_matches.concat extract_repetition_character subrule, current_match.dup, current_set.dup, working_candidate.dup, translate_non_terminals
+          surviving_matches.concat extract_repetition_character subrule, current_match.dup, deep_clone_a_set(current_set), working_candidate.dup, translate_non_terminals
         elsif subrule.class == Terminal
           match, working_candidate = subrule.extract working_candidate
           if match
             current_set.first << match
-            surviving_matches << [ current_match + match, working_candidate.dup, current_set.dup ]
+            surviving_matches << [ current_match + match, working_candidate.dup, deep_clone_a_set(current_set) ]
           end
         elsif subrule.class == NonTerminal
           matches = if translate_non_terminals
-                      translations = subrule.translate(working_candidate)
-                      translations.map{|tx| tx[2] = current_set; tx[2].first << tx[0]; tx }
+                      translations = subrule.translate(working_candidate).select{|tx| tx[0]}
+                      translations.map{|tx| tx[2] = deep_clone_a_set(current_set); tx[2].first << tx[0].dup; tx }
+                      translations
                     else
                       subrule.extract(working_candidate)
                     end
 
-          if matches.first[0]
+          if matches.size > 0 and matches.first[0]
             surviving_matches.concat matches
           end
         else
@@ -90,14 +91,14 @@ class Rule
 
   def translate candidate
     matches = extract candidate, true
-
-    matches.inject([]) do |txs, match|
+    translations = matches.inject([]) do |txs, match|
       current_match, working_candidate, current_set = match
-      return [nil, candidate] unless current_match
+      next txs << [nil, candidate] unless current_match
+      next txs << [current_set.join(""), working_candidate.dup] unless @translation.size > 0
       current_translation = ""
       @translation.each do |sub_translation|
         if sub_translation.class == TranslationRepetitionSet
-          current_set[(sub_translation.offset-1)..-1].each do |current|
+          current_set[(sub_translation.offset-1)..-1].to_a.each do |current|
             sub_translation.translations.each do |translation|
               current_translation += translation_helper current, translation
             end
@@ -108,6 +109,8 @@ class Rule
       end
       txs << [current_translation, working_candidate]
     end
+    return [ [nil, candidate] ] unless translations.size > 0
+    translations
   end
 
   protected
@@ -135,11 +138,19 @@ class Rule
             working_candidate = repetition_working_candidate
             additional_productions << [ current_match + match + more_match,
                                          repetition_working_candidate.dup,
-                                         repetition_current_set.dup ]
+                                         deep_clone_a_set(repetition_current_set) ]
           end
         end
       end
-      return [ [current_match, working_candidate, current_set] ] if additional_productions.size == 0
+      return [ [current_match, working_candidate, deep_clone_a_set(current_set)] ] if additional_productions.size == 0
       additional_productions
+    end
+
+    def deep_clone_a_set set
+      set.inject([]){ |s, subset|
+        s << subset.inject([]){ |ss, string|
+          ss << string.dup
+        }
+      }
     end
 end
