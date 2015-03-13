@@ -1,4 +1,5 @@
 class NonTerminal
+  attr_reader :rules
 
   def initialize *rules
     validate_list_of_rules *rules

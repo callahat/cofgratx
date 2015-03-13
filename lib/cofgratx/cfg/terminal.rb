@@ -1,4 +1,5 @@
 class Terminal
+  attr_accessor :terminal
 
   def initialize param
     unless %w{Regexp String}.include? param.class.name
