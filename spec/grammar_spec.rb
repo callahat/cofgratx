@@ -4,6 +4,7 @@ require 'cofgratx/cfg/repetition'
 require 'cofgratx/cfg/translation_repetition_set_error'
 require 'cofgratx/cfg/translation_repetition_set'
 require 'cofgratx/cfg/rule_error'
+require 'cofgratx/cfg/grammar_error'
 require 'cofgratx/cfg/rule'
 require 'cofgratx/cfg/non_terminal'
 require 'cofgratx/cfg/grammar'
@@ -51,6 +52,30 @@ describe Grammar do
             [1,2,TranslationRepetitionSet.new(1,3,2,1,"STOP")]
           ]
         }.to_not raise_error
+      expect( @grammar.rules.keys.size ).to equal 2
+    end
+
+    it "adds a rule with invalid translation for nonexistant repetition" do
+      expect( @grammar.rules.keys.size ).to equal 0
+      expect{
+        @grammar.add_rules :one,
+          [ [Terminal.new(/a/), Terminal.new("b"), :two],
+            [1,2,TranslationRepetitionSet.new(1,3,2,1,"STOP")]
+          ]
+        }.to raise_error GrammarError, "rule does not contain repetition"
+      expect{
+        @grammar.add_rules :one,
+          [ [Terminal.new(/a/), Terminal.new("b"), :two, Repetition.new(",")],
+            [1,2,TranslationRepetitionSet.new(1,3,9,1,"STOP")]
+          ]
+        }.to raise_error GrammarError, "rule contains fewer parts than the TranslationRepetitionSet has for a translation: [3, 9, 1, \"STOP\"]"
+      expect{
+        @grammar.add_rules :one,
+          [ [Terminal.new(/a/), Terminal.new("b"), :two],
+            [1,4]
+          ]
+        }.to raise_error GrammarError, "rule contains fewer parts than translation number: 4"
+
       expect( @grammar.rules.keys.size ).to equal 2
     end
 
@@ -122,6 +147,25 @@ describe Grammar do
         expect( @grammar.rules.keys.size ).to equal 1
         expect( @grammar.rules[:one].rules.map(&:rule) ).to match_array [ ]
         expect( @grammar.rules[:one].rules.map(&:translation) ).to match_array [ ]
+
+        expect{
+          @grammar.add_rules :one,
+            [ [Terminal.new("GOOD"), Terminal.new("GOOD"), Terminal.new("GOOD"), :two],
+              [1,2,TranslationRepetitionSet.new(1,3,2,1,"STOP")]
+            ]
+          }.to raise_error GrammarError
+        expect{
+          @grammar.add_rules :one,
+            [ [:two, Repetition.new(",")],
+              [1,2,TranslationRepetitionSet.new(1,9)]
+            ]
+          }.to raise_error GrammarError
+        expect{
+          @grammar.add_rules :one,
+            [ [:two, Repetition.new(",")],
+              [12]
+            ]
+          }.to raise_error GrammarError
       end
 
       it "does not add any rules when bad translations are also given" do
@@ -161,9 +205,9 @@ describe Grammar do
     it "wipes out the productions for a given nonterminal" do
       @grammar = described_class.new
       @terminal_a = Terminal.new("a")
-      expect{ @grammar.add_rules :one, [ [@terminal_a], [1,2] ] }.to_not raise_error
+      expect{ @grammar.add_rules :one, [ [@terminal_a], [1] ] }.to_not raise_error
       expect( @grammar.rules[:one].rules.map(&:rule) ).to match_array [ [@terminal_a] ]
-      expect( @grammar.rules[:one].rules.map(&:translation) ).to match_array [ [1,2] ]
+      expect( @grammar.rules[:one].rules.map(&:translation) ).to match_array [ [1] ]
       expect{ @grammar.clear_rule :one }.to_not raise_error
       expect( @grammar.rules[:one].rules.map(&:rule) ).to match_array []
       expect( @grammar.rules[:one].rules.map(&:translation) ).to match_array []

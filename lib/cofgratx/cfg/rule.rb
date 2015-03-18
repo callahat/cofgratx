@@ -1,7 +1,8 @@
 class Rule
-  attr_reader :rule, :translation
+  attr_reader :rule, :translation, :translation_error_message
 
   def initialize subrules = [], translations = []
+    @translation_error_message = nil
     @rule = set_rule subrules
     @translation = set_translation translations
   end
@@ -36,11 +37,14 @@ class Rule
     @translation.each do |part|
       if part.class == TranslationRepetitionSet
         if @rule.last.class != Repetition
+          @translation_error_message = "rule does not contain repetition"
           return false
         elsif part.translations.select{|tx| tx.class == Fixnum and tx > @rule.size}.count > 0
+          @translation_error_message = "rule contains fewer parts than the TranslationRepetitionSet has for a translation: #{part.translations.inspect}"
           return false
         end
-      else
+      elsif part.class == Fixnum
+        @translation_error_message = "rule contains fewer parts than translation number: #{part.inspect}"
         return false if part > @rule.size
       end
     end

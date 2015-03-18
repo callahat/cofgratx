@@ -15,7 +15,12 @@ class Grammar
           rule[index] = (@rules[rule[index]] ||= NonTerminal.new)
         end
       end
-      good_rules << Rule.new( rule, translation )
+      new_rule = Rule.new( rule, translation )
+      if new_rule.valid_translation?
+        good_rules << Rule.new( rule, translation )
+      else
+        raise GrammarError.new(new_rule.translation_error_message)
+      end
     end
 
     @rules[non_terminal_symbol.to_sym].add_rules *good_rules
