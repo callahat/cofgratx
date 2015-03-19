@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["tim.callahan25@yahoo.com"]
   spec.summary       = "A context free grammar validator and translator"
   spec.description   = "The CFG class can be used to create a specification for a context free grammar and define translations for it"
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/callahat/cofgratx"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
